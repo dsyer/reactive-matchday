@@ -34,14 +34,16 @@ public class MatchEventInfoRepository {
 
 
     private final PlayerInfoRepository playerInfoRepository;
+    private final MatchInfoRepository matchInfoRepository;
     private final ReactiveMongoTemplate mongoTemplate;
 
 
     public MatchEventInfoRepository(
-            final PlayerInfoRepository playerInfoRepository,
+            final PlayerInfoRepository playerInfoRepository, final MatchInfoRepository matchInfoRepository,
             final ReactiveMongoTemplate mongoTemplate) {
         super();
         this.playerInfoRepository = playerInfoRepository;
+        this.matchInfoRepository = matchInfoRepository;
         this.mongoTemplate = mongoTemplate;
     }
 
@@ -60,10 +62,10 @@ public class MatchEventInfoRepository {
         // For a specific Match, gets the info of the playing teams and creates the MatchInfo
         if (event.getPlayerId() == null) {
             // This is a START_MATCH event
-            return Mono.just(new MatchEventInfo(event.getType(), null, event.getTimestamp()));
+            return Mono.just(new MatchEventInfo(event.getType(), null, null, event.getTimestamp()));
         }
-        return this.playerInfoRepository.getPlayerInfo(event.getPlayerId())
-                .map(playerInfo -> new MatchEventInfo(event.getType(), playerInfo, event.getTimestamp()));
+        return matchInfoRepository.getMatchInfo(event.getMatchId()).flatMap(matchInfo -> this.playerInfoRepository.getPlayerInfo(event.getPlayerId())
+                .map(playerInfo -> new MatchEventInfo(event.getType(), matchInfo, playerInfo, event.getTimestamp())));
     }
 
 

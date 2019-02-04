@@ -27,6 +27,7 @@ import com.github.danielfernandez.matchday.business.repository.MatchCommentRepos
 import com.github.danielfernandez.matchday.business.repository.MatchInfoRepository;
 import com.github.danielfernandez.matchday.business.repository.MatchStatusRepository;
 import com.github.danielfernandez.matchday.util.TimestampUtils;
+
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -34,9 +35,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.thymeleaf.spring5.context.webflux.IReactiveDataDriverContextVariable;
-import org.thymeleaf.spring5.context.webflux.IReactiveSSEDataDriverContextVariable;
-import org.thymeleaf.spring5.context.webflux.ReactiveDataDriverContextVariable;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -78,18 +77,11 @@ public class MatchController {
                 this.matchCommentRepository
                         .findByMatchIdAndTimestampLessThanEqualOrderByTimestampDesc(matchId, timestamp);
 
-        // Create a data-driver context variable that sets Thymeleaf in data-driven mode,
-        // rendering HTML (iterations) as items are produced in a reactive-friendly manner.
-        // This object also works as wrapper that avoids Spring WebFlux trying to resolve
-        // it completely before rendering the HTML.
-        final IReactiveDataDriverContextVariable commentDataDriver =
-                new ReactiveDataDriverContextVariable(commentStream, 1); // buffers size = 1
-
         // Add all attributes to the model
         model.addAttribute("matchId", matchId);                  // Integer
         model.addAttribute("match", matchInfo);                  // Mono, will be resolved before rendering
         model.addAttribute("commentsTimestamp", timestamp);      // String
-        model.addAttribute("commentStream", commentDataDriver);  // Flux wrapped in a DataDriver to avoid resolution
+        model.addAttribute("flux.commentStream", commentStream);  // Flux wrapped in a DataDriver to avoid resolution
 
         // Return the template name (templates/match.html)
         return "match";
@@ -109,18 +101,11 @@ public class MatchController {
         final Flux<MatchStatus> statusStream =
                 this.matchStatusRepository.tailMatchStatusStreamByMatchId(matchId);
 
-        // Create a data-driver context variable that sets Thymeleaf in data-driven mode
-        // in order to produce (render) Server-Sent Events as the Flux produces values.
-        // This object also works as wrapper that avoids Spring WebFlux trying to resolve
-        // it completely before rendering the HTML.
-        final IReactiveSSEDataDriverContextVariable statusDataDriver =
-                new ReactiveDataDriverContextVariable(statusStream, 1); // buffers size = 1
-
         // Add the stream as a model attribute
-        model.addAttribute("statusStream", statusDataDriver);  // Flux wrapped in a DataDriver to avoid resolution
+        model.addAttribute("flux.statusStream", statusStream);
 
-        // Will use the same "match" template, but only a fragment: the matchStatus block.
-        return "match :: #matchStatus";
+        // Return the template name (templates/matchStatus.html)
+        return "matchStatus";
 
     }
 

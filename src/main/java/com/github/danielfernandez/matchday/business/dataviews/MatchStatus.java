@@ -51,6 +51,10 @@ public class MatchStatus {
         return this.matchInfo.getMatchId();
     }
 
+    public String getId() {
+        return "" + this.events.size();
+    }
+
     public Team getTeamA() {
         return this.matchInfo.getTeamA();
     }

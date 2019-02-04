@@ -6,12 +6,12 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>MatchDay: [[|${match.teamA.name} - ${match.teamB.name}|]]</title>
+    <title>MatchDay: {{#match}}{{#teamA}}{{name}}{{/teamA}} - {{#teamB}}{{name}}{{/teamB}}{{/match}}</title>
 
-    <link data-th-href="@{/css/bootstrap.min.css}" rel="stylesheet">
-    <link data-th-href="@{/css/matchday.css}" rel="stylesheet">
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/matchday.css" rel="stylesheet">
 
-    <script data-th-inline="javascript">
+    <script inline="javascript">
 
         /*
          * MatchStatus will be in charge of the EventSource that will retrieve
@@ -28,7 +28,7 @@
             this.start = function () {
 
                 var matchSummaryBlock = document.getElementById("matchStatus");
-                var sourceUrl = [[@{|/match/${matchId}/statusStream|}]];
+                var sourceUrl = "/match/{{matchId}}/statusStream";
 
                 this.source = new EventSource(sourceUrl);
 
@@ -66,7 +66,7 @@
             this.start = function () {
 
                 var matchCommentsTable = document.getElementById("matchComments");
-                var sourceUrl = [[@{|/match/${matchId}/commentStream|(timestamp=${commentsTimestamp})}]];
+                var sourceUrl = "/match/{{matchId}}/commentStream?timestamp={{commentsTimestamp}}";
 
                 this.source = new EventSource(sourceUrl);
 
@@ -129,32 +129,12 @@
     <div class="container">
 
         <div id="logo" class="row">
-            <a data-th-href="@{/matches}"><img data-th-src="@{/images/matchday_logo.png}"></a>
+            <a href="/matches"><img src="/images/matchday_logo.png"></a>
         </div>
 
         <div class="row">
 
             <div id="matchStatus" class="col-md-6">
-                <div data-th-each="status : ${statusStream}">
-                    <table class="table">
-                        <tbody>
-                            <tr class="result">
-                                <td class="teamA">[[${status.teamAName}]]</td>
-                                <td class="score">[[${status.teamAScore}]]</td>
-                                <td class="score">[[${status.teamBScore}]]</td>
-                                <td class="teamB">[[${status.teamBName}]]</td>
-                            </tr>
-                            <tr data-th-each="eventInfo : ${status.events}" data-th-classappend="|event${eventInfo.type}|">
-                                <td class="playerA">[[${eventInfo.teamCode == status.teamACode} ? ${eventInfo.playerName}]]</td>
-                                <td class="eventicon"><img data-th-if="${eventInfo.teamCode == status.teamACode}"
-                                                           data-th-src="@{|/images/${eventInfo.type}.png|}"></td>
-                                <td class="eventicon"><img data-th-if="${eventInfo.teamCode == status.teamBCode}"
-                                                           data-th-src="@{|/images/${eventInfo.type}.png|}"></td>
-                                <td class="playerB">[[${eventInfo.teamCode == status.teamBCode} ? ${eventInfo.playerName}]]</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
             </div>
 
             <div class="col-md-6">
@@ -163,10 +143,12 @@
                         <tr><th colspan="2">Match comments</th></tr>
                     </thead>
                     <tbody>
-                        <tr data-th-each="comment : ${commentStream}">
-                            <td class="author">[[${comment.author}]]</td>
-                            <td class="text">[[${comment.text}]]</td>
+                        {{#flux.commentStream}}
+                        <tr>
+                            <td class="author">{{author}}</td>
+                            <td class="text">{{text}}</td>
                         </tr>
+                        {{/flux.commentStream}}
                     </tbody>
                 </table>
             </div>

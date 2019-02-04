@@ -1,0 +1,34 @@
+{{#flux.statusStream}}
+event: message
+id: {{id}}
+data: <div>
+data:     <table class="table">
+data:         <tbody>
+data:             <tr class="result">
+data:                 <td class="teamA">{{teamAName}}</td>
+data:                 <td class="score">{{teamAScore}}</td>
+data:                 <td class="score">{{teamBScore}}</td>
+data:                 <td class="teamB">{{teamBName}}</td>
+data:             </tr>
+data:             {{#events}}
+data:             <tr class="event{{type}}">
+data:                 {{#teamA}}
+data:                 <td class="playerA">{{playerName}}</td>
+data:                 <td class="eventicon"><img src="/images/{{type}}.png"></td>
+data:                 <td class="eventicon"></td>
+data:                 <td class="playerB"></td>
+data:                 {{/teamA}}
+data:                 {{^teamA}}
+data:                 <td class="playerA"></td>
+data:                 <td class="eventicon"></td>
+data:                 <td class="eventicon"><img src="/images/{{type}}.png"></td>
+data:                 <td class="playerB">{{playerName}}</td>
+data:                 {{/teamA}}
+data:             </tr>
+data:             {{/events}}
+data:         </tbody>
+data:     </table>
+data: </div>
+
+
+{{/flux.statusStream}}

@@ -27,13 +27,19 @@ public class MatchEventInfo implements Comparable<MatchEventInfo> {
     private final MatchEvent.Type type;
     private final PlayerInfo playerInfo;
     private final String timestamp;
+    private boolean teamA;
 
 
-    public MatchEventInfo(final MatchEvent.Type type, final PlayerInfo playerInfo, final String timestamp) {
+    public MatchEventInfo(final MatchEvent.Type type, final MatchInfo matchInfo, final PlayerInfo playerInfo, final String timestamp) {
         super();
         this.type = type;
+        this.teamA = playerInfo==null ? true : playerInfo.getTeam().getCode().equals(matchInfo.getTeamA().getCode());
         this.playerInfo = playerInfo;
         this.timestamp = timestamp;
+    }
+
+    public boolean isTeamA() {
+        return this.teamA;
     }
 
     public MatchEvent.Type getType() {
