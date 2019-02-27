@@ -42,6 +42,7 @@ import org.springframework.web.server.ServerWebExchange;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 /**
  * Spring WebFlux {@link View} using the Mustache template engine.
@@ -88,21 +89,35 @@ public class ReactiveMustacheView extends MustacheView {
 		}
 		boolean sse = MediaType.TEXT_EVENT_STREAM.isCompatibleWith(contentType);
 		Charset charset = getCharset(contentType).orElse(getDefaultCharset());
-		try (FluxWriter writer = new FluxWriter(
-				() -> exchange.getResponse().bufferFactory().allocateBuffer(), charset)) {
+		FluxWriter writer = new FluxWriter(
+				() -> exchange.getResponse().bufferFactory().allocateBuffer(), charset);
+		Mono<Template> rendered = Mono.fromCallable(() -> compile(resource, sse))
+				.subscribeOn(Schedulers.elastic())
+				.doOnSuccess(template -> template.execute(model, writer));
+		return rendered
+				.thenEmpty(Mono.defer(() -> exchange.getResponse()
+						.writeAndFlushWith(Flux.from(writer.getBuffers()))))
+				.doOnTerminate(() -> close(writer));
+	}
+
+	private void close(FluxWriter writer) {
+		try {
+			writer.close();
+		}
+		catch (IOException e) {
+			writer.release();
+		}
+	}
+
+	private Template compile(Resource resource, boolean sse) {
+		try {
 			try (Reader reader = getReader(resource, sse)) {
 				Template template = this.compiler.compile(reader);
-				template.execute(model, writer);
-				return exchange.getResponse()
-						.writeAndFlushWith(Flux.from(writer.getBuffers()));
-			}
-			catch (Exception ex) {
-				writer.release();
-				return Mono.error(ex);
+				return template;
 			}
 		}
-		catch (Exception ex) {
-			return Mono.error(ex);
+		catch (IOException e) {
+			throw new IllegalStateException("Cannot close reader");
 		}
 	}
 
@@ -221,7 +236,7 @@ class SseTemplateReader extends BufferedReader {
 					break;
 				}
 			}
-			return total == 0 && line==null ? -1 : total;
+			return total == 0 && line == null ? -1 : total;
 		}
 
 		private char[] next() throws IOException {
